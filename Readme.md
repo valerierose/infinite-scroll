@@ -1,6 +1,8 @@
-# Infinite Scroll
+# Infinite Scroll (Stateful Version)
 
 <http://www.infinite-scroll.com/>
+
+This modification changes url in the address bar as you scroll up and down.
 
 The jQuery and WordPress Plugins:
 

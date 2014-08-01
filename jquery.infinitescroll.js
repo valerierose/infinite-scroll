@@ -51,7 +51,8 @@
             isDone: false, // For when it goes all the way through the archive.
             isPaused: false,
             isBeyondMaxPage: false,
-            currPage: 1
+            currPage: 1,
+            page_breaks: [],
         },
         debug: false,
         behavior: undefined,
@@ -172,6 +173,9 @@
                 if (!opts.state.isBeyondMaxPage)
                     opts.loading.msg.fadeOut(opts.loading.speed);
             };
+
+            // initialize page breaks
+            opts.state.page_breaks.push([$(document).height(), opts.state.currPage]);
 
             // callback loading
             opts.callback = function(instance, data, url) {
@@ -377,6 +381,7 @@
                     // of the elements collected as the first argument.
 
                     data = children.get();
+                    opts.state.page_breaks.push([$(document).height(), opts.state.currPage]);
                     break;
             }
 
@@ -415,6 +420,37 @@
 
             // if distance remaining in the scroll (including buffer) is less than the orignal nav to bottom....
             return (pixelsFromWindowBottomToBottom - opts.bufferPx < opts.pixelsFromNavToBottom);
+
+        },
+
+        _changeurl: function infscr_changeurl() {
+
+            var opts = this.options,
+            position = opts.binder.scrollTop();
+
+            // If the page given in the url is not the page given by the page breaks array, update the url
+            var correct_page = -1;
+            var top = 0;
+            for (var k = 0; k < opts.state.page_breaks.length; k++) {
+              if (position >= top && position < opts.state.page_breaks[k][0]) {
+                correct_page = opts.state.page_breaks[k][1];
+                break;
+              }
+              top = opts.state.page_breaks[k][0];
+            }
+
+            var params = window.location.search.substring(1).split('&');
+            var url_page = 0;
+            for (var k=0; k<params.length; k++) {
+              var values = params[k].split("=");
+              if (values[0] == "page") {
+                url_page = parseInt(values[1]);
+                break;
+              }
+            }
+            if (url_page != correct_page) {
+              window.history.pushState(null, null, opts.path.join(correct_page));
+            }
 
         },
 
@@ -670,6 +706,8 @@
             if (state.isDuringAjax || state.isInvalidPage || state.isDone || state.isDestroyed || state.isPaused) {
                 return;
             }
+
+            this._changeurl();
 
             if (!this._nearbottom()) {
                 return;
